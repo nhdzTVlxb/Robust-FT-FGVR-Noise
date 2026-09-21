@@ -1,0 +1,13 @@
+# Install torch+torchvision FIRST from the CUDA wheel index that matches the server,
+# e.g. (pick your CUDA):
+#   pip install --index-url https://download.pytorch.org/whl/cu128 torch==2.11.0 torchvision==0.26.0
+#   pip install --index-url https://download.pytorch.org/whl/cu121 torch torchvision
+# Then:
+#   pip install -r requirements.txt
+#
+# Tested locally on torch 2.11.0 / torchvision 0.26.0 (CUDA 13.0). Any recent
+# torch>=2.1 with matching torchvision works.
+timm==1.0.27
+numpy>=1.26
+Pillow>=10
+tqdm>=4.66
