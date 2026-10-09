@@ -1,0 +1,17 @@
+{
+  "python": "3.11.15",
+  "os": "Linux",
+  "packages": {
+    "torch": "2.7.1+cu128",
+    "torchvision": "0.22.1+cu128",
+    "transformers": "5.17.0",
+    "peft": "0.20.0",
+    "numpy": "2.4.6",
+    "Pillow": "12.2.0",
+    "huggingface-hub": "1.31.0",
+    "safetensors": "0.8.0",
+    "accelerate": "1.15.0"
+  },
+  "cuda": "12.8",
+  "gpu": "NVIDIA GeForce RTX 4090"
+}

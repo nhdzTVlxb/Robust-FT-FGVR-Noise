@@ -1,0 +1,76 @@
+Exp22（4090，复赛 750 类）实验整理
+
+一、实验身份
+- 服务器：4090 机器，/my-data/aic4
+- 代码来源目录：/root/aic4/CLIP_76_TrainingKit_v18_style_exp22_750_b512_50ep
+- 训练输出目录：/my-data/aic4/checkpoint_exp22_750_b512_50ep
+- 类别数：750（类别 ID 为 0000～0749）
+- 训练集：复赛 750 类训练集；本实验没有划分验证集（val_split=0.0）
+- 固定随机种子：42
+- 允许的 CLIP 基座：/my-data/aic4/models/clip-vit-base-patch32
+
+二、训练配置
+- 输入尺寸：512 px；位置编码按 512 网格插值
+- 训练 epoch：50；全量训练，未启用可用的验证早停
+- batch size：96；workers：8；AMP：float16
+- 优化器：AdamW
+- learning rate：1e-4
+- weight decay：0.05
+- warmup：3 个 epoch；gradient clip：1.0
+- 调度：warmup 后 cosine；状态记录在 checkpoint metadata
+
+三、LoRA 与模型
+- backbone：CLIP ViT-B/32 vision encoder，仅使用赛题允许的 CLIP 预训练基座
+- LoRA 覆盖全部 12 个 ViT block
+- target modules：q_proj、k_proj、v_proj、out_proj、fc1、fc2
+- rank / alpha：128 / 256
+- dropout：0.2
+- 分类头：CLIP hidden size 到 750 类的 Linear head
+
+四、训练增强与损失
+- RandomResizedCrop：scale=(0.5, 1.0)
+- RandomHorizontalFlip
+- RandAugment：4 个操作，magnitude=18
+- MixUp alpha：0.3
+- CutMix alpha：0.3
+- cosine feature distillation：distill_weight=1.0
+- teacher：同一允许的 CLIP 基座，float32，冻结，仅用于特征蒸馏
+- EMA：decay=0.9998
+- small-loss：启用；前 8 个 epoch warmup，之后按样本损失动态降权
+- clean ratio 分段：epoch 6～10 为 0.90，epoch 11～20 为 0.85，之后为 0.80
+- clean / noisy sample weight：1.0 / 0.3
+- EMA soft-label：启用；noisy 样本 loss = 0.3 hard CE + 0.7 EMA soft-label KL
+- soft-label temperature：1.0
+
+五、推理与 TTA
+- 训练阶段没有 TTA；TTA 只发生在预测阶段
+- 默认预测脚本 predict.py：legacy14
+- legacy14：先放大到 1.14 倍，7 个裁剪位置（中心、左上、右上、左下、右下、上中、左中）
+  每个 crop 各取原图和水平翻转，共 14 views
+- predict_balanced.py：在 14-view 平均分数上支持 raw、soft prior、range30_70 和 exact_uniform
+- 6-view/12-view 的 logits 解码工具单独保存在 exp22_6view_soft_decode.py；它不是本次训练时 TTA
+- 后处理是在每张图的类别得分上重新分配标签，不是直接修改生成后的 CSV
+
+六、权重文件
+- weights/best_lora_inference.pth：第 50 轮 EMA，紧凑格式，仅含 LoRA/head EMA
+- weights/last_lora_inference.pth：第 50 轮最后 EMA，紧凑格式
+- 紧凑权重的 state 中 weights_kind=lora_ema_only；预测脚本已支持该格式
+- 完整 best/last checkpoint 仍包含优化器、随机状态等训练恢复信息，未重复复制到本整理包
+
+七、文件作用
+- code/train.py：训练、EMA、small-loss、EMA soft-label、checkpoint 保存
+- code/model_utils.py：数据集、增强、CLIP/LoRA 构建、损失、EMA 和公共工具
+- code/config.py：Exp22 默认路径与实际 750 类训练参数
+- code/predict.py：legacy14 TTA 的原始 argmax 提交
+- code/predict_balanced.py：raw、soft prior、range30_70、exact_uniform 后处理
+- code/exp22_6view_soft_decode.py：6-view logits 与容量约束的独立解码工具
+- metadata/config.json：训练运行时真正写入的 750 类配置
+- metadata/history.json：逐 epoch 训练 loss 记录
+- metadata/status.json：训练结束状态
+- metadata/environment.json：运行环境信息
+- metadata/split_manifest.json：样本顺序与划分清单
+
+八、复现注意事项
+- 本整理包不包含训练集、测试集和 CLIP 基座
+- config.py 与 checkpoint 内 config 均为 750 类 Exp22；运行时优先使用 checkpoint 内配置
+- 使用紧凑权重时，--clip-model 必须指向同一允许的 clip-vit-base-patch32 基座
