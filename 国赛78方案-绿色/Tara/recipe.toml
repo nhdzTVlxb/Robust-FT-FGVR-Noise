@@ -1,0 +1,58 @@
+[picture]
+side = 512
+crop_floor = 0.65
+detail_probability = 0.5
+detail_span = [450.0, 550.0]
+source_edge_cap = 500
+rand_policy = "rand-m5-n2-mstd0.5-inc1"
+
+[color]
+rate = 0.5
+brightness = 0.10
+contrast = 0.10
+saturation = 0.10
+hue = 0.02
+
+[optim]
+epochs = 40
+batch_size = 192
+warm_epochs = 3.0
+tower_lr = 6e-5
+layer_decay = 0.8
+head_lr = 1e-3
+weight_decay = 0.05
+label_smoothing = 0.05
+gce_fraction = 0.05
+gce_power = 0.7
+
+[holdout]
+per_class = 5
+class_floor = 15
+seed = 42
+
+[token_swap]
+candidate_blocks = 3
+step_share = 0.46
+beta = 2.0
+aspect_jitter = 0.22
+
+[image_blend]
+rate = 0.5
+mixup_beta = 0.9
+cutmix_beta = 1.1
+mixup_share = 0.55
+
+[tail_guard]
+tail_count_limit = 100
+rare_count_limit = 20
+tail_suspect_weight = 0.90
+rare_suspect_weight = 0.95
+head_suspect_weight = 0.75
+tail_boost_cap = 1.5
+
+[early_stop]
+minimum_epochs = 20
+patience_epochs = 3
+
+[readout]
+batch_size = 48

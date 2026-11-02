@@ -1,0 +1,21 @@
+name: tara
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pytorch=2.5.1
+  - pytorch-cuda=12.4
+  - torchvision=0.20.1
+  - numpy=1.26.4
+  - pillow=10.3.0
+  - opencv=4.10.0
+  - pip
+  - pip:
+      - timm==1.0.27
+      - tqdm==4.66.5
+      - scipy==1.14.1
+      - pandas==2.2.3
+      - PyYAML==6.0.2
+      - tomli==2.0.1
